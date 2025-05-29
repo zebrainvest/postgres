@@ -23,3 +23,16 @@
 
 Find a schema dump in schema_dump.sql file.
 
+## Cron jobs
+
+* `sh ~/backup_and_rsync.sh`
+* * runs at midnight every 7 days based on the day of the month (e.g., 1st, 8th, 15th, 22nd, 29th), not strictly once a week.
+* * logs its output to the console (output is received by root user via email)
+* * empties the `/root/property/backup_data` folder, and then dumps the propertytoolkit database in compressed custom format (pg_dump -F c) to it, with the name `propertytoolkit_backup_$(date +%Y%m%d).dump`
+* * copies the dump to the Archival server, to the `/home/property/crawler_db` folder; it does not delete any files from it.
+* * at the time of this writing, each dump is 17GB
+* `/root/bin/update_listing_scrapper_data &`
+* * runs every two hours
+* * executes the stored procedure `update_listing_scrapper_data(1000)`
+* * logs its output to `/var/log/cron/update_listing_scrapper_data.log`
+
