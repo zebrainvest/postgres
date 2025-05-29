@@ -132,3 +132,13 @@ CROSS JOIN LATERAL string_to_array(schedule, ' ') s
 * * executes the stored procedure `update_listing_scrapper_data(1000)`
 * * logs its output to `/var/log/cron/update_listing_scrapper_data.log`
 
+## Stored procedures
+
+### update_listing_scrapper_data
+
+Updates `uprn` and `address` columns from `listing_scrapper_data` table (where address is empty/null or uprn is zero or null, and postcode is nonempty) taking these values from matching records from either `price_paid` or `certificates_depc` table, matched via two separate strategies:
+* from postcode + price_paid + year, i.e. (`transactionhistoryprice`, `transactionhistoryyear`) = `price_paid`.(`price_paid`, `date_part('year', sold_date::timestamp)`), provided these values are nonempty and nonzero
+* postcode + epc_date + epc_rating, i.e. (`epc_date::date`, `epc_rating`) = `certificates_depc`.(`lodgement_date`, `current_energy_rating`) - `uprn` here is obtained via `uprn_addresses` match
+* postcode + epc_current_value + epc_potential_value, i.e. (`epc_date::date`, `epc_rating`) = `certificates_depc`.(`current_energy_efficiency`, `potential_energy_efficiency`) - `uprn` here is obtained via `uprn_addresses` match
+
+The updates are performed iterating trough groups of postcodes, aiming at keeping searches, matching, and updates, small.
